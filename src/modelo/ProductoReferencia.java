@@ -1,18 +1,18 @@
 
 package modelo;
 
-public class Producto {
+public class ProductoReferencia {
     private String nombre;
+    private String codigo;
     private double precio;
-    private double cantidad;
 
-    public Producto() {
+    public ProductoReferencia() {
     }
 
-    public Producto(String nombre, double precio, double cantidad) {
+    public ProductoReferencia(String nombre, String codigo, double precio) {
         this.nombre = nombre;
+        this.codigo = codigo;
         this.precio = precio;
-        this.cantidad = cantidad;
     }
 
     public String getNombre() {
@@ -30,15 +30,17 @@ public class Producto {
     public void setPrecio(double precio) {
         this.precio = precio;
     }
+
+    public String getCodigo() {
+        return codigo;
+    }
+
+    public void setCodigo(String codigo) {
+        this.codigo = codigo;
+    }
     
-
-    public double getCantidad() {
-        return cantidad;
-    }
-
-    public void setCantidad(double cantidad) {
-        this.cantidad = cantidad;
-    }
+    
+  
     
     
 }

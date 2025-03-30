@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
+
 package vista;
 
 import com.itextpdf.text.Document;
@@ -18,22 +15,40 @@ import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import modelo.Cliente;
-import modelo.Producto;
+import modelo.ProductoReferencia;
 
+import javax.swing.table.TableRowSorter;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import javax.swing.RowFilter;
+
+import controlador.Controlador_ProductoReferencia;
+import java.util.Random;
+import modelo.ProductoAdquirido;
 /**
  *
  * @author oscar
  */
 public class frmRegistrarProductos extends javax.swing.JFrame {
 
-    private DefaultTableModel dtmProducto, dtmDatosCli;
-    private Object[] arrayDatosProducto = new Object[4];
+    private TableRowSorter trsfiltro;
+    String filtro;
+    
+    private DefaultTableModel dtmProducto, dtmDatosCli, dtmBusqueda;
+    private Object[] arrayDatosProducto = new Object[5];
     private Object[] arrayDatosCli = new Object[3];
+    private Object[] arrayDatosProRef = new Object[3];
+    
+    private String codCompra = "";
     
     public frmRegistrarProductos() {
         initComponents();
         dtmProducto = (DefaultTableModel)tablaProductos.getModel();
         dtmDatosCli = (DefaultTableModel)tablaDatosCliente.getModel();
+        dtmBusqueda = (DefaultTableModel)tablaBuscar.getModel();
+        llenarTablaBuscar();
+        GenerarCodCompra();
+        txtMontoTotal.setEnabled(false);
     }
 
     /**
@@ -69,12 +84,22 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        tablaBuscar = new javax.swing.JTable();
+        txtBuscar = new javax.swing.JTextField();
+        btnBuscar = new javax.swing.JButton();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        txtMontoTotal = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
+        txtCodProducto = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Generador de boletas electrónicas");
+        setResizable(false);
 
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-        jPanel1.add(txtProducto, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 40, 310, 30));
+        jPanel1.add(txtProducto, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 40, 380, 30));
 
         btnAgregar.setText("Agregar");
         btnAgregar.addActionListener(new java.awt.event.ActionListener() {
@@ -82,20 +107,20 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
                 btnAgregarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnAgregar, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 40, -1, -1));
+        jPanel1.add(btnAgregar, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 40, -1, -1));
 
         tablaProductos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Nombre", "Cantidad", "Precio unitario", "Precio total"
+                "Código", "Nombre", "Cantidad", "Precio unitario", "Precio total"
             }
         ));
         jScrollPane1.setViewportView(tablaProductos);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 130, 410, 90));
-        jPanel1.add(txtUnidadesProducto, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 90, 140, -1));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 130, 470, 90));
+        jPanel1.add(txtUnidadesProducto, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 90, 70, -1));
 
         btnRegistrarDatosCliente.setText("Registrar datos del cliente");
         btnRegistrarDatosCliente.addActionListener(new java.awt.event.ActionListener() {
@@ -103,8 +128,8 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
                 btnRegistrarDatosClienteActionPerformed(evt);
             }
         });
-        jPanel1.add(btnRegistrarDatosCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 420, -1, -1));
-        jPanel1.add(txtPrecioUnitario, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 90, 160, -1));
+        jPanel1.add(btnRegistrarDatosCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 440, -1, -1));
+        jPanel1.add(txtPrecioUnitario, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 90, 90, -1));
 
         btnEliminar.setText("Eliminar");
         btnEliminar.addActionListener(new java.awt.event.ActionListener() {
@@ -112,7 +137,7 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
                 btnEliminarActionPerformed(evt);
             }
         });
-        jPanel1.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 80, -1, 20));
+        jPanel1.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 80, -1, 20));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel1.setText("Registro de Productos");
@@ -120,10 +145,10 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel2.setText("Registro de datos del cliente");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 240, -1, -1));
-        jPanel1.add(txtNombres, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 280, 190, -1));
-        jPanel1.add(txtApellidos, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 330, 190, 30));
-        jPanel1.add(txtDNI, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 380, 190, -1));
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 260, -1, -1));
+        jPanel1.add(txtNombres, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 300, 270, -1));
+        jPanel1.add(txtApellidos, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 350, 270, 30));
+        jPanel1.add(txtDNI, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 400, 270, -1));
 
         tablaDatosCliente.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -135,7 +160,7 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
         ));
         jScrollPane2.setViewportView(tablaDatosCliente);
 
-        jPanel1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 280, 210, 90));
+        jPanel1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 290, 360, 90));
 
         btnGenerarBoleta.setText("Generar boleta");
         btnGenerarBoleta.addActionListener(new java.awt.event.ActionListener() {
@@ -143,7 +168,7 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
                 btnGenerarBoletaActionPerformed(evt);
             }
         });
-        jPanel1.add(btnGenerarBoleta, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 380, 150, 20));
+        jPanel1.add(btnGenerarBoleta, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 390, 150, 20));
 
         btnNuevaBoleta.setText("Nueva boleta");
         btnNuevaBoleta.addActionListener(new java.awt.event.ActionListener() {
@@ -151,36 +176,81 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
                 btnNuevaBoletaActionPerformed(evt);
             }
         });
-        jPanel1.add(btnNuevaBoleta, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 410, 150, -1));
+        jPanel1.add(btnNuevaBoleta, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 390, 150, -1));
 
         jLabel3.setText("Nombre del producto");
         jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 20, -1, -1));
 
         jLabel4.setText("Unidades");
-        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 70, -1, -1));
+        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 70, -1, -1));
 
         jLabel5.setText("Precio unitario");
-        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 70, -1, -1));
+        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 70, -1, -1));
 
         jLabel6.setText("Nombres");
-        jPanel1.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 260, -1, -1));
+        jPanel1.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 280, -1, -1));
 
         jLabel7.setText("Apellidos");
-        jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 310, -1, -1));
+        jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 330, -1, -1));
 
         jLabel8.setText("DNI");
-        jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 360, -1, -1));
+        jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 380, -1, -1));
+
+        tablaBuscar.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Código", "Nombre", "Precio Unitario"
+            }
+        ));
+        tablaBuscar.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tablaBuscarMouseClicked(evt);
+            }
+        });
+        jScrollPane3.setViewportView(tablaBuscar);
+
+        jPanel1.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 90, 300, 130));
+
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                txtBuscarKeyTyped(evt);
+            }
+        });
+        jPanel1.add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 50, 200, -1));
+
+        btnBuscar.setText("Buscar");
+        btnBuscar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBuscarActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 50, -1, -1));
+
+        jLabel9.setText("Búsqueda del producto");
+        jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 30, -1, -1));
+
+        jLabel10.setText("Monto Total :");
+        jPanel1.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 240, -1, -1));
+        jPanel1.add(txtMontoTotal, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 230, 80, 30));
+
+        jLabel11.setText("Cód. Producto");
+        jPanel1.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 70, -1, -1));
+        jPanel1.add(txtCodProducto, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 90, 120, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 464, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 847, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 451, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 499, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
@@ -205,23 +275,26 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
                 if(cantidad <= 0 || precioU <= 0){
                     JOptionPane.showMessageDialog(this,"Solo números enteros");
                 }else{
-                    Producto nuevoP = new Producto(nombreP,precioU,cantidad);
+                    String codProducto = txtCodProducto.getText();
+                    ProductoAdquirido nuevoP = new ProductoAdquirido(codCompra,codProducto,cantidad);
 
-                    arrayDatosProducto[0]=nuevoP.getNombre();
-                    arrayDatosProducto[1]=nuevoP.getCantidad();
-                    arrayDatosProducto[2]=nuevoP.getPrecio();
-                    arrayDatosProducto[3]=precioU*(cantidad);
+                    arrayDatosProducto[0]=nuevoP.getCodigoProducto();
+                    arrayDatosProducto[1]=nombreP;
+                    arrayDatosProducto[2]=nuevoP.getCantidad();
+                    arrayDatosProducto[3]=precioU;
+                    arrayDatosProducto[4]=precioU*nuevoP.getCantidad();
                     dtmProducto.addRow(arrayDatosProducto);
 
                     //limpiamos los campos
                     txtProducto.setText("");
                     txtUnidadesProducto.setText("");
                     txtPrecioUnitario.setText("");
+                    txtCodProducto.setText("");
                 }
             }
         
         }
-            
+        calcularMontoTotal();    
     }//GEN-LAST:event_btnAgregarActionPerformed
 
     private void btnRegistrarDatosClienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegistrarDatosClienteActionPerformed
@@ -300,8 +373,45 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
         // TODO add your handling code here:
         dtmProducto.setRowCount(0);
         dtmDatosCli.setRowCount(0);
+        codCompra = GenerarCodCompra();
+        
     }//GEN-LAST:event_btnNuevaBoletaActionPerformed
 
+    private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarActionPerformed
+        // TODO add your handling code here:
+        txtBuscar.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(final KeyEvent e) {
+                String cadena = txtBuscar.getText();
+                repaint();
+                filtro();
+            }
+        });
+    }//GEN-LAST:event_btnBuscarActionPerformed
+
+    private void txtBuscarKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarKeyTyped
+        // TODO add your handling code here:
+        trsfiltro = new TableRowSorter(tablaBuscar.getModel());
+        tablaBuscar.setRowSorter(trsfiltro);
+    }//GEN-LAST:event_txtBuscarKeyTyped
+
+    private void tablaBuscarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaBuscarMouseClicked
+        // TODO add your handling code here:
+        int X = tablaBuscar.getSelectedRow();
+        String nombreP = dtmBusqueda.getValueAt(X, 1).toString();
+        String codigoP = dtmBusqueda.getValueAt(X, 0).toString();
+        String precioUP = dtmBusqueda.getValueAt(X, 2).toString();
+        
+        txtProducto.setText(nombreP);
+        txtCodProducto.setText(codigoP);
+        txtPrecioUnitario.setText(precioUP);
+        
+    }//GEN-LAST:event_tablaBuscarMouseClicked
+
+    public void filtro(){
+        filtro = txtBuscar.getText();
+        trsfiltro.setRowFilter(RowFilter.regexFilter(txtBuscar.getText(), 0));
+    }
     /**
      * @param args the command line arguments
      */
@@ -339,11 +449,14 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAgregar;
+    private javax.swing.JButton btnBuscar;
     private javax.swing.JButton btnEliminar;
     private javax.swing.JButton btnGenerarBoleta;
     private javax.swing.JButton btnNuevaBoleta;
     private javax.swing.JButton btnRegistrarDatosCliente;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -351,13 +464,19 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JTable tablaBuscar;
     private javax.swing.JTable tablaDatosCliente;
     private javax.swing.JTable tablaProductos;
     private javax.swing.JTextField txtApellidos;
+    private javax.swing.JTextField txtBuscar;
+    private javax.swing.JTextField txtCodProducto;
     private javax.swing.JTextField txtDNI;
+    private javax.swing.JTextField txtMontoTotal;
     private javax.swing.JTextField txtNombres;
     private javax.swing.JTextField txtPrecioUnitario;
     private javax.swing.JTextField txtProducto;
@@ -420,5 +539,31 @@ public class frmRegistrarProductos extends javax.swing.JFrame {
             txtApellidos.setText("");
             txtDNI.setText("");
         }
+    }
+
+    private void llenarTablaBuscar() {
+        Controlador_ProductoReferencia controlador = new Controlador_ProductoReferencia();
+        ArrayList<ProductoReferencia> productos = controlador.getProductos();
+        for(ProductoReferencia aux:productos){
+            arrayDatosProRef[0] = aux.getCodigo();
+            arrayDatosProRef[1] = aux.getNombre();
+            arrayDatosProRef[2] = aux.getPrecio();
+            dtmBusqueda.addRow(arrayDatosProRef);
+        }
+    }
+
+    private String GenerarCodCompra() {
+        int num =  0;
+        Random r = new Random();
+        num = r.nextInt(100, 100000);
+        return String.valueOf(num);
+    }
+
+    private void calcularMontoTotal() {
+        double mTotal = 0;
+        for(int i = 0; i<dtmProducto.getRowCount(); i++){
+            mTotal += Double.parseDouble(dtmProducto.getValueAt(i, 4).toString());
+        }
+        txtMontoTotal.setText(String.valueOf(mTotal));
     }
 }
